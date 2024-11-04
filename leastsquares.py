@@ -17,13 +17,16 @@ def coefDet(e):
 
 
 fReport = open("report.txt", "w")  # Make a new file in write mode
-fReport.write("error:                       coefficent of determination:\n")
+fReport.write(
+    "error:                       coefficent of determination:                    w values: \n"
+)
 
 
 t, y = np.loadtxt("/Users/sam/Desktop/sampython/ame208hw/hw5/data.txt")
 N = len(t)
 best_coefs = np.zeros(3)
-smallest_error = 10000
+best_w = None
+smallest_error = None
 for w in np.linspace(2 * np.pi, 0, 1000, endpoint=False):
 
     # outer loop, all is does it keep w constant and tries at different values.
@@ -43,33 +46,51 @@ for w in np.linspace(2 * np.pi, 0, 1000, endpoint=False):
     current_coef_det = coefDet(current_error)
 
     # updates the best coefficents, a, if the error is lowest
-    if current_error < smallest_error:
+    if smallest_error == None or current_error < smallest_error:
         smallest_error = current_error
         best_coefs = a
-
-    # reporting the error
-    fReport.write(
-        str(current_error) + "                 " + str(current_coef_det) + "\n"
-    )
+        best_w = w
 
 
+# reporting the error
+fReport.write(
+    str(current_error)
+    + "                 "
+    + str(current_coef_det)
+    + "                "
+    + str(best_w)
+    + "\n"
+)
 fReport.close()
 
-print(best_coefs, smallest_error)
+
 # Plot data and best fit
+
+
+# t was no ordered properly frm data.txt, had to reaarange to plot it properly
+t_graph = np.linspace(t.min(), t.max(), 1000)
+
+# update A matrix to be suited to the new oredely t value, and include the optimal w value.
+A_graph = np.array([[1.0, t_i, t_i * np.sin(best_w * t_i)] for t_i in t_graph])
+
+# solves the y values for the best fit
+y_fitted = A_graph.dot(best_coefs)
+
+# parse best coefs
 a0, a1, a2 = best_coefs
 print(f"Best coefficients: a0={a0:.2e}, a1={a1:.2e}, a2={a2:.2e}")
 print(f"Smallest error: {smallest_error}")
+print(f"Best w: {best_w}")
 
-# Plot data and best fit
+# Plot the data and the best fit
 plt.style.use("Solarize_Light2")
 plt.scatter(t, y, label="Experimental Data")
 plt.plot(
-    t,
-    A.dot(best_coefs),
+    t_graph,
+    y_fitted,
     color="grey",
     linewidth=4,
-    label=rf"Best Fit: $y = {a0:.2f} + ({a1:.2e}t) + ({a2:.2e}t) \sin(wt)$",
+    label=rf"Best Fit: $y = {a0:.2f} + ({a1:.2e}t) + ({a2:.2e}t) \sin({best_w:.2f}t)$",
 )
 plt.xlabel("Time (t)")
 plt.ylabel("Measured Value (y)")
